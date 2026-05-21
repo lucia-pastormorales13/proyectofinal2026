@@ -2,31 +2,68 @@ package com.Bumeran.Prestamos.Servicios;
 
 import java.util.List;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.Bumeran.Prestamos.Entidades.Usuario;
 import com.Bumeran.Prestamos.Repositories.UsuarioRepository;
+import com.Bumeran.Prestamos.dto.LoginRequest;
+import com.Bumeran.Prestamos.dto.RegistroRequest;
 
 @Service
 public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
-    // Inyección de dependencias por constructor
-    public UsuarioService(UsuarioRepository usuarioRepository) {
+    // Inyección de dependencias por constructor (añadimos encoder y jwt)
+    public UsuarioService(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
         this.usuarioRepository = usuarioRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
     }
 
     /**
-     * Registra un nuevo usuario en la aplicación.
-     * Más adelante, aquí podremos añadir lógica para encriptar la contraseña.
+     * Registra un nuevo usuario en la aplicación utilizando el DTO.
+     * Ahora SÍ encripta la contraseña de forma segura antes de guardarla.
      */
-    public Usuario registrarUsuario(Usuario usuario) {
-        // Validación básica: verificar que el email no esté ya registrado
-        if (usuarioRepository.findByEmail(usuario.getEmail()) != null) {
+    public String registrarUsuario(RegistroRequest request) {
+        // Validación: verificar que el email no esté ya registrado
+        if (usuarioRepository.findByEmail(request.getEmail()) != null) {
             throw new RuntimeException("¡Error! Ya existe un usuario registrado con este correo electrónico.");
         }
-        return usuarioRepository.save(usuario);
+
+        Usuario usuario = new Usuario();
+        usuario.setNombre(request.getNombre());
+        usuario.setEmail(request.getEmail());
+        
+        // Encriptamos la contraseña con BCrypt antes de guardarla en la BD
+        usuario.setPassword(passwordEncoder.encode(request.getPassword()));
+
+        usuarioRepository.save(usuario);
+        
+        return "Usuario registrado correctamente";
+    }
+
+    /**
+     * Autentica a un usuario y le devuelve su token JWT si las credenciales son válidas.
+     */
+    public String login(LoginRequest request) {
+        // Buscar el usuario por email
+        Usuario usuario = usuarioRepository.findByEmail(request.getEmail());
+        
+        if (usuario == null) {
+            throw new RuntimeException("Credenciales incorrectas (Email no encontrado)");
+        }
+
+        // Verificar si la contraseña coincide con el hash guardado
+        if (!passwordEncoder.matches(request.getPassword(), usuario.getPassword())) {
+            throw new RuntimeException("Credenciales incorrectas (Contraseña inválida)");
+        }
+
+        // Si todo coincide, generamos el Token JWT con su email
+        return jwtService.generateToken(usuario.getEmail());
     }
 
     /**
@@ -38,8 +75,9 @@ public class UsuarioService {
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado con el ID: " + id));
     }
 
-    // Devuelve todos los usuarios del sistema.
-   
+    /**
+     * Devuelve todos los usuarios del sistema.
+     */
     public List<Usuario> listarTodosLosUsuarios() {
         return usuarioRepository.findAll();
     }
