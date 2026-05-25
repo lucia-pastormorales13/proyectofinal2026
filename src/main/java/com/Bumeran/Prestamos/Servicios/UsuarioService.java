@@ -9,6 +9,7 @@ import com.Bumeran.Prestamos.Entidades.Usuario;
 import com.Bumeran.Prestamos.Repositories.UsuarioRepository;
 import com.Bumeran.Prestamos.dto.LoginRequest;
 import com.Bumeran.Prestamos.dto.RegistroRequest;
+import com.Bumeran.Prestamos.dto.UsuarioUpdateRequest;
 
 @Service
 public class UsuarioService {
@@ -81,4 +82,26 @@ public class UsuarioService {
     public List<Usuario> listarTodosLosUsuarios() {
         return usuarioRepository.findAll();
     }
+
+public Usuario editarUsuario(Usuario usuarioExistente, UsuarioUpdateRequest datosNuevos) {
+    // 1. Modificar nombre si viene en la petición
+    if (datosNuevos.getNombre() != null && !datosNuevos.getNombre().isEmpty()) {
+        usuarioExistente.setNombre(datosNuevos.getNombre());
+    }
+    
+    // 2. Modificar email si viene en la petición
+    if (datosNuevos.getEmail() != null && !datosNuevos.getEmail().isEmpty()) {
+        usuarioExistente.setEmail(datosNuevos.getEmail());
+    }
+    
+    // 3. Modificar y encriptar contraseña si viene una nueva
+    if (datosNuevos.getPassword() != null && !datosNuevos.getPassword().isEmpty()) {
+        org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder encoder = 
+            new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
+        usuarioExistente.setPassword(encoder.encode(datosNuevos.getPassword()));
+    }
+    
+    // 4. Guardar en la base de datos
+    return usuarioRepository.save(usuarioExistente);
+}
 }

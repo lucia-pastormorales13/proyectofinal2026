@@ -1,11 +1,10 @@
 package com.Bumeran.Prestamos.Config;
 
-
-
-import java.util.List; // Usaremos List.of en lugar de Arrays.asList
+import java.util.List;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -30,13 +29,19 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
-                // Configuración moderna de CORS integrada directamente en la seguridad
+                // Vincula la configuración de CORS que definimos abajo
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll() // Login y registro públicos
-                        .anyRequest().authenticated() // Todo lo demás protegido
+                        // Permite acceso total a login y registro sin pedir token
+                        .requestMatchers("/api/auth/**").permitAll() 
+                        // 🚨 PRUEBA CIENTÍFICA: Dejamos el PUT libre para ver si el fallo es del Token o del CSRF
+                        .requestMatchers(HttpMethod.PUT, "/api/usuarios/editar/**").permitAll() 
+                        // Bloquea todo lo demás requiriendo JWT
+                        .anyRequest().authenticated() 
                 )
+                // Usamos sesión sin estado (Stateless) porque nos manejamos por tokens
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // Filtro personalizado ANTES del filtro estándar de Spring
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -47,14 +52,11 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    // Cambiamos el antiguo 'CorsFilter' por el 'CorsConfigurationSource' oficial de Spring Security
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration corsConfig = new CorsConfiguration();
         corsConfig.setAllowCredentials(true);
-        
-        // Usamos List.of(...) que es nativo de Java moderno y evita fallos con Arrays
-        corsConfig.setAllowedOrigins(List.of("http://localhost:5173")); 
+        corsConfig.setAllowedOrigins(List.of("http://localhost:5173")); // El puerto de tu frontend en Vite
         corsConfig.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         corsConfig.setAllowedHeaders(List.of("Authorization", "Cache-Control", "Content-Type"));
 
