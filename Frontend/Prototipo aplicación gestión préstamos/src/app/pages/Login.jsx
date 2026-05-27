@@ -10,8 +10,9 @@ import {
   CardHeader,
   CardTitle
 } from "../components/ui/card";
-import { Package } from "lucide-react";
 import { toast } from "sonner";
+// Importamos el logo usando la ruta correcta desde src/Assets
+import logo from "../Assets/Logotexto.png";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -26,7 +27,7 @@ export default function Login() {
       const response = await fetch("http://localhost:8080/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email, password: password }),
+        body: JSON.stringify({ email, password }),
       });
 
       if (!response.ok) {
@@ -36,14 +37,10 @@ export default function Login() {
 
       const data = await response.json();
 
-      // ✅ LOGIN CORRECTO
       if (data && data.token) {
         localStorage.setItem("token", data.token);
+        localStorage.setItem("nombreUsuario", data.nombre || "Usuario");
 
-        // 1. Guardar el nombre del usuario (ajusta 'nombre' si tu backend lo devuelve como 'name' o 'userName')
-        localStorage.setItem("nombreUsuario", data.nombre || "Usuario"); 
-
-        // 2. Obtener el ID del usuario
         let usuarioIdFinal = null;
         try {
           const payload = JSON.parse(atob(data.token.split(".")[1]));
@@ -63,7 +60,6 @@ export default function Login() {
         localStorage.setItem("usuarioId", usuarioIdFinal);
         toast.success("¡Inicio de sesión correcto!");
         window.location.href = "/";
-
       } else {
         throw new Error("El servidor no devolvió un token válido.");
       }
@@ -74,18 +70,16 @@ export default function Login() {
       setLoading(false);
     }
   };
-  
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1 text-center">
-          <div className="flex justify-center mb-2 text-blue-600">
-            <Package className="size-10" />
+        <CardHeader className="space-y-0 text-center pb-3">
+          {/* Usamos la variable importada 'logo' */}
+          <div className="flex justify-center -mb-20">
+            <img src={logo} alt="Logotexto" className="h-90 w-90 object-contain" />
           </div>
-          <CardTitle className="text-2xl font-bold">
-            Login to Your Account
-          </CardTitle>
+          <CardTitle className="text-2xl font-bold">Login to Your Account</CardTitle>
           <CardDescription>
             Enter your credentials to access the platform
           </CardDescription>
