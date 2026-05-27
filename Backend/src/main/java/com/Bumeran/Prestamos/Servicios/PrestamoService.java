@@ -1,66 +1,91 @@
 package com.Bumeran.Prestamos.Servicios;
-import java.time.LocalDate;
 
+import java.time.LocalDate;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import com.Bumeran.Prestamos.Entidades.Articulo;
 import com.Bumeran.Prestamos.Entidades.Prestamo;
+import com.Bumeran.Prestamos.Entidades.Usuario;
+import com.Bumeran.Prestamos.Enummeration.EstadoPrestamo;
 import com.Bumeran.Prestamos.Repositories.ArticuloRepository;
 import com.Bumeran.Prestamos.Repositories.PrestamoRepository;
-
-import jakarta.transaction.Transactional;
+import com.Bumeran.Prestamos.Repositories.UsuarioRepository;
+import com.Bumeran.Prestamos.dto.CrearPrestamoRequest;
 
 @Service
 public class PrestamoService {
 
-    private final PrestamoRepository prestamoRepository;
-    private final ArticuloRepository articuloRepository;
+    @Autowired private PrestamoRepository prestamoRepository;
+    @Autowired private UsuarioRepository usuarioRepository;
+    @Autowired private ArticuloRepository articuloRepository;
 
-    public PrestamoService(PrestamoRepository prestamoRepository, ArticuloRepository articuloRepository) {
-        this.prestamoRepository = prestamoRepository;
-        this.articuloRepository = articuloRepository;
+    public List<Prestamo> listarMisPrestamos() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        Usuario usuario = usuarioRepository.findByEmail(email);
+        return prestamoRepository.findByUsuarioPropietarioId(usuario.getId());
     }
 
-    @Transactional
-    public Prestamo prestarObjeto(Prestamo prestamo) {
-        // 1. Buscamos el artículo en la base de datos
-        Articulo articulo = articuloRepository.findById(prestamo.getArticulo().getId())
-                .orElseThrow(() -> new RuntimeException("El artículo no existe"));
+    public Prestamo prestarObjeto(CrearPrestamoRequest request) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        Usuario propietario = usuarioRepository.findByEmail(email);
 
-        // 2. Validamos que no esté ya prestado
-        if ("PRESTADO".equalsIgnoreCase(articulo.getEstado())) {
-            throw new IllegalStateException("¡Error! Este artículo ya está prestado a alguien.");
+        Articulo articulo = articuloRepository.findById(request.getArticuloId())
+                .orElseThrow(() -> new RuntimeException("Artículo no encontrado"));
+
+        if (!articulo.getEstado().equals("DISPONIBLE")) {
+            throw new RuntimeException("El artículo no está disponible");
         }
 
-        // 3. Cambiamos el estado del artículo
+        Prestamo prestamo = new Prestamo();
+        prestamo.setArticulo(articulo);
+        prestamo.setFechaInicio(LocalDate.now());
+        prestamo.setEstado(EstadoPrestamo.EN_CURSO);
+        prestamo.setUsuarioPropietario(propietario); // Vinculación única
+
+        if (request.getUsuarioReceptorId() != null) {
+            Usuario usuarioReceptor = usuarioRepository.findById(request.getUsuarioReceptorId())
+                    .orElseThrow(() -> new RuntimeException("Usuario receptor no encontrado"));
+            prestamo.setUsuarioReceptor(usuarioReceptor);
+        } else {
+            prestamo.setNombreReceptor(request.getNombreReceptor());
+        }
+
         articulo.setEstado("PRESTADO");
         articuloRepository.save(articulo);
+        return prestamoRepository.save(prestamo);
+    }
 
-        // 4. Configuramos la fecha de inicio hoy y guardamos el préstamo
-        prestamo.setFechaInicio(LocalDate.now());
+    public Prestamo devolverObjeto(Long id) {
+        Prestamo prestamo = prestamoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Préstamo no encontrado"));
+        
+        prestamo.setFechaDevuelto(LocalDate.now());
+        prestamo.setEstado(EstadoPrestamo.FINALIZADO);
+        
+        Articulo articulo = prestamo.getArticulo();
+        articulo.setEstado("DISPONIBLE");
+        articuloRepository.save(articulo);
         
         return prestamoRepository.save(prestamo);
     }
 
-    @Transactional
-    public Prestamo devolverObjeto(Long prestamoId) {
-        // 1. Buscamos el préstamo
-        Prestamo prestamo = prestamoRepository.findById(prestamoId)
-                .orElseThrow(() -> new RuntimeException("Préstamo no encontrado"));
-
-        if (prestamo.getFechaDevuelto() != null) {
-            throw new IllegalStateException("Este objeto ya fue devuelto anteriormente.");
-        }
-
-        // 2. Marcamos la fecha de devolución
-        prestamo.setFechaDevuelto(LocalDate.now());
-
-        // 3. Volvemos a poner el artículo como disponible
-        Articulo articulo = prestamo.getArticulo();
-        articulo.setEstado("DISPONIBLE");
-        articuloRepository.save(articulo);
-
-        // 4. Guardamos los cambios
-        return prestamoRepository.save(prestamo);
+    public List<Prestamo> obtenerPrestamosUsuario(Long usuarioId) {
+        return prestamoRepository.findByUsuarioPropietarioId(usuarioId);
     }
+
+    public List<Prestamo> listarPrestamosRecibidos() {
+    String email = SecurityContextHolder.getContext().getAuthentication().getName();
+    Usuario usuario = usuarioRepository.findByEmail(email);
+    
+    // Asumiendo que tu PrestamoRepository tiene este método:
+    return prestamoRepository.findByUsuarioReceptorId(usuario.getId());
+}
+// Método para listar lo que A MÍ me han prestado (yo soy el receptor)
+public List<Prestamo> listarMisPrestamosRecibidos(Long usuarioId) {
+    return prestamoRepository.findByUsuarioReceptorId(usuarioId);
+}
 }

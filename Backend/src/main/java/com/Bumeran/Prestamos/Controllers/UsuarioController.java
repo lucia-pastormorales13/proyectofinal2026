@@ -5,6 +5,7 @@ package com.Bumeran.Prestamos.Controllers;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -18,6 +19,7 @@ import com.Bumeran.Prestamos.dto.UsuarioUpdateRequest;
 
 @RestController
 @RequestMapping("/api/usuarios") // <--- Cambiamos la ruta para que requiera Token JWT
+@CrossOrigin(origins = "*")
 public class UsuarioController {
 
     private final UsuarioService usuarioService;

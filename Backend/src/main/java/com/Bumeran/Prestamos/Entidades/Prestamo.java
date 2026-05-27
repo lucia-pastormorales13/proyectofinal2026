@@ -44,6 +44,11 @@ public class Prestamo {
     @JoinColumn(name = "usuario_receptor_id")
     private Usuario usuarioReceptor;
 
+    // Este campo guardará al usuario que está prestando el objeto
+    @ManyToOne
+    @JoinColumn(name = "usuario_propietario_id")
+    private Usuario usuarioPropietario;
+    
     @Column(nullable = false)
     private LocalDate fechaInicio;
 

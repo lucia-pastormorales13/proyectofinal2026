@@ -1,6 +1,8 @@
 package com.Bumeran.Prestamos.Servicios;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -18,7 +20,7 @@ public class UsuarioService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 
-    // Inyección de dependencias por constructor (añadimos encoder y jwt)
+    // Inyección de dependencias por constructor
     public UsuarioService(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
@@ -27,7 +29,6 @@ public class UsuarioService {
 
     /**
      * Registra un nuevo usuario en la aplicación utilizando el DTO.
-     * Ahora SÍ encripta la contraseña de forma segura antes de guardarla.
      */
     public String registrarUsuario(RegistroRequest request) {
         // Validación: verificar que el email no esté ya registrado
@@ -47,29 +48,24 @@ public class UsuarioService {
         return "Usuario registrado correctamente";
     }
 
-    /**
-     * Autentica a un usuario y le devuelve su token JWT si las credenciales son válidas.
-     */
-    public String login(LoginRequest request) {
-        // Buscar el usuario por email
-        Usuario usuario = usuarioRepository.findByEmail(request.getEmail());
-        
-        if (usuario == null) {
-            throw new RuntimeException("Credenciales incorrectas (Email no encontrado)");
-        }
-
-        // Verificar si la contraseña coincide con el hash guardado
-        if (!passwordEncoder.matches(request.getPassword(), usuario.getPassword())) {
-            throw new RuntimeException("Credenciales incorrectas (Contraseña inválida)");
-        }
-
-        // Si todo coincide, generamos el Token JWT con su email
-        return jwtService.generateToken(usuario.getEmail());
+   public Map<String, Object> login(LoginRequest request) {
+    Usuario usuario = usuarioRepository.findByEmail(request.getEmail());
+    
+    if (usuario == null) throw new RuntimeException("Credenciales incorrectas");
+    if (!passwordEncoder.matches(request.getPassword(), usuario.getPassword())) {
+        throw new RuntimeException("Credenciales incorrectas");
     }
 
+    String token = jwtService.generateToken(usuario.getEmail());
+    
+    Map<String, Object> respuesta = new HashMap<>();
+    respuesta.put("token", token);
+    respuesta.put("id", usuario.getId()); // Frontend espera esto
+    
+    return respuesta;
+}
     /**
      * Busca un usuario por su ID. 
-     * Si no lo encuentra, lanza una excepción controlada.
      */
     public Usuario obtenerUsuarioPorId(Long id) {
         return usuarioRepository.findById(id)
@@ -83,25 +79,28 @@ public class UsuarioService {
         return usuarioRepository.findAll();
     }
 
-public Usuario editarUsuario(Usuario usuarioExistente, UsuarioUpdateRequest datosNuevos) {
-    // 1. Modificar nombre si viene en la petición
-    if (datosNuevos.getNombre() != null && !datosNuevos.getNombre().isEmpty()) {
-        usuarioExistente.setNombre(datosNuevos.getNombre());
+    /**
+     * Modifica los datos de un usuario existente.
+     */
+    public Usuario editarUsuario(Usuario usuarioExistente, UsuarioUpdateRequest datosNuevos) {
+        if (datosNuevos.getNombre() != null && !datosNuevos.getNombre().isEmpty()) {
+            usuarioExistente.setNombre(datosNuevos.getNombre());
+        }
+        
+        if (datosNuevos.getEmail() != null && !datosNuevos.getEmail().isEmpty()) {
+            usuarioExistente.setEmail(datosNuevos.getEmail());
+        }
+        
+        if (datosNuevos.getPassword() != null && !datosNuevos.getPassword().isEmpty()) {
+            org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder encoder = 
+                new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
+            usuarioExistente.setPassword(encoder.encode(datosNuevos.getPassword()));
+        }
+        
+        return usuarioRepository.save(usuarioExistente);
     }
-    
-    // 2. Modificar email si viene en la petición
-    if (datosNuevos.getEmail() != null && !datosNuevos.getEmail().isEmpty()) {
-        usuarioExistente.setEmail(datosNuevos.getEmail());
+
+    public Usuario autenticarYObtenerUsuario(String email, String password) {
+        throw new UnsupportedOperationException("Unimplemented method 'autenticarYObtenerUsuario'");
     }
-    
-    // 3. Modificar y encriptar contraseña si viene una nueva
-    if (datosNuevos.getPassword() != null && !datosNuevos.getPassword().isEmpty()) {
-        org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder encoder = 
-            new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
-        usuarioExistente.setPassword(encoder.encode(datosNuevos.getPassword()));
-    }
-    
-    // 4. Guardar en la base de datos
-    return usuarioRepository.save(usuarioExistente);
-}
 }

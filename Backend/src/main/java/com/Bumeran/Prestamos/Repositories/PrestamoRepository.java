@@ -9,9 +9,13 @@ import com.Bumeran.Prestamos.Entidades.Prestamo;
 
 @Repository
 public interface PrestamoRepository extends JpaRepository<Prestamo, Long> {
-    // Historial de una cosa que has prestado
+    
+    // Busca los préstamos que yo he creado (como dueño del objeto)
+    List<Prestamo> findByUsuarioPropietarioId(Long usuarioPropietarioId);
+
+    // Busca los préstamos de un artículo específico
     List<Prestamo> findByArticuloId(Long articuloId);
     
-    // Lo que le has prestado a un amigo con cuenta
+    // Busca lo que le he prestado a un amigo registrado
     List<Prestamo> findByUsuarioReceptorId(Long usuarioReceptorId);
 }

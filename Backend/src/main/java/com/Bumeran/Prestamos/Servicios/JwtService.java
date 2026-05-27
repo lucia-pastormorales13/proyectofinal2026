@@ -20,7 +20,14 @@ public class JwtService {
     // Clave secreta de prueba (Debe tener al menos 256 bits en Base64)
     private static final String SECRET_KEY = "TXkgU3VwZXIgU2VjcmV0IEtleSBGb3IgSldUIEF1dGhlbnRpY2F0aW9uIEJ1bWVyYW4gUHJlc3RhbW9z";
 
-    // Generar un token básico pasando solo el email
+    // 🔑 1️⃣ ¡EL NUEVO MÉTODO MÁGICO!: Ahora recibe el email Y el ID del usuario
+    public String generateToken(String email, Long id) {
+        Map<String, Object> extraClaims = new HashMap<>();
+        extraClaims.put("id", id); // Inyectamos el ID real en los claims del JWT
+        return generateToken(extraClaims, email);
+    }
+
+    // Generar un token básico pasando solo el email (Lo dejamos por si Spring Security lo usa en sus filtros)
     public String generateToken(String email) {
         return generateToken(new HashMap<>(), email);
     }

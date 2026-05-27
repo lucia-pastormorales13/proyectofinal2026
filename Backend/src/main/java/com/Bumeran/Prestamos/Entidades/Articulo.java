@@ -28,15 +28,10 @@ public class Articulo {
 
     private String descripcion;
 
-    // Podría ser un String o un Enum (DISPONIBLE, PRESTADO, PERDIDO)
     @Column(nullable = false)
     private String estado = "DISPONIBLE";
 
-    // El dueño del artículo
     @ManyToOne
     @JoinColumn(name = "propietario_id", nullable = false)
     private Usuario propietario;
- 
-
-   
 }
