@@ -12,7 +12,7 @@ import {
 } from "../components/ui/card";
 import { toast } from "sonner";
 // Importamos el logo usando la ruta correcta desde src/Assets
-import logo from "../Assets/Logotexto.png";
+import LogoTexto from "../Assets/Logotexto.png";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -77,7 +77,7 @@ export default function Login() {
         <CardHeader className="space-y-0 text-center pb-3">
           {/* Usamos la variable importada 'logo' */}
           <div className="flex justify-center -mb-20">
-            <img src={logo} alt="Logotexto" className="h-90 w-90 object-contain" />
+            <img src={LogoTexto} alt="Logotexto" className="h-90 w-90 object-contain" />
           </div>
           <CardTitle className="text-2xl font-bold">Login to Your Account</CardTitle>
           <CardDescription>

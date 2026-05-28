@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Outlet, useNavigate, Link, useLocation } from "react-router-dom";
 import { Button } from "./ui/button";
 import { LogOut, Package, ClipboardList } from "lucide-react";
-import logo from "../Assets/Logotexto.png";
+import Logo from "../Assets/Logo.png";
 
 function Layout() {
   const navigate = useNavigate();
@@ -40,9 +40,9 @@ function Layout() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-8">
               <div className="flex items-center gap-2">
-                <div className="size-10 rounded-full bg-blue-600 flex items-center justify-center">
-                  <img src={logo} alt="Logotexto" className="h-6 w-6 object-contain" />
-                </div>
+               
+                  <img src={Logo} alt="Logo" className="h-25 w-25 object-contain" />
+            
                 <h1 className="text-xl font-semibold text-gray-900">
                   Bumeran
                 </h1>
