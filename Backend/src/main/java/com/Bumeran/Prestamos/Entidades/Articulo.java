@@ -31,6 +31,9 @@ public class Articulo {
     @Column(nullable = false)
     private String estado = "DISPONIBLE";
 
+    @Column(nullable = false)
+    private Boolean activo = true;
+
     @ManyToOne
     @JoinColumn(name = "propietario_id", nullable = false)
     private Usuario propietario;
