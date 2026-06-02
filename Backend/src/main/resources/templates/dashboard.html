@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Bumeran Préstamos</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}" />
+</head>
+<body>
+    <div class="container">
+        <div class="nav">
+            <img th:src="@{/images/Logo.png}" alt="Bumeran" height="32" style="margin-right: 0.5rem;" />
+            <h1 style="font-size: 1.25rem; margin-right: 2rem;">Bumeran</h1>
+            <a href="/dashboard" class="active">My Items</a>
+            <a href="/prestamos">Loans</a>
+            <span style="margin-left: auto; font-size: 0.875rem; color: var(--muted-foreground);">
+                Welcome to Bumeran!
+            </span>
+            <a href="/logout" class="btn btn-secondary" style="padding: 0.25rem 0.75rem; font-size: 0.8rem;">Logout</a>
+        </div>
+
+        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+        <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+
+        <!-- SECCIÓN: MIS ARTÍCULOS (todos, disponibles y prestados) -->
+        <div style="margin-bottom: 3rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <p style="color: var(--muted-foreground); font-size: 0.875rem;">Gestiona todos tus objetos registrados.</p>
+                <a href="/articulos/nuevo" class="btn" style="gap: 0.5rem;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Add item
+                </a>
+            </div>
+
+            <div th:if="${#lists.isEmpty(todosArticulos)}" class="card" style="border: 2px dashed var(--border); text-align: center; padding: 3rem 1rem;">
+                <div style="margin-bottom: 1rem;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 9.4 7.55 4.24a1 1 0 0 0-1.1 0L2 6.5"/><path d="M21.16 8.2 12 13.2l-1.5-.9"/><path d="M21 11.5v5.5a1 1 0 0 1-.5.86l-5.5 3.2a1 1 0 0 1-1 0l-10-5.8A1 1 0 0 1 3 13.5V8.5"/><path d="m3 14.5 5.5 3.2a1 1 0 0 0 1 0l3.5-2"/></svg>
+                </div>
+                <h2 style="font-size: 1.25rem;">No tienes artículos registrados</h2>
+            </div>
+
+            <div th:unless="${#lists.isEmpty(todosArticulos)}" class="grid-3">
+                <div th:each="articulo : ${todosArticulos}"
+                     class="card"
+                     th:classappend="${articulosPrestadosIds.contains(articulo.id)} ? 'card-loaned'"
+                     style="padding: 1.25rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div style="flex: 1;">
+                            <h2 style="font-size: 1.125rem; margin-bottom: 0.5rem;" th:text="${articulo.nombre}">Nombre</h2>
+                            <span th:if="${articulosPrestadosIds.contains(articulo.id)}" class="badge badge-loaned">PRESTADO</span>
+                            <span th:unless="${articulosPrestadosIds.contains(articulo.id)}" class="badge badge-active">DISPONIBLE</span>
+                        </div>
+                        <form th:unless="${articulosPrestadosIds.contains(articulo.id)}"
+                              th:action="@{/articulos/{id}/eliminar(id=${articulo.id})}" method="post"
+                              style="display: inline;" onsubmit="return confirm('¿Eliminar este artículo?')">
+                            <button type="submit" style="background: none; border: none; cursor: pointer; padding: 0.25rem; color: #dc2626; border-radius: var(--radius);" title="Eliminar">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                            </button>
+                        </form>
+                    </div>
+                    <p style="font-size: 0.875rem; color: var(--muted-foreground); margin-top: 0.75rem;" th:text="${articulo.descripcion}">Descripción</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 2: ITEMS QUE ME HAN PRESTADO -->
+        <div th:if="${not #lists.isEmpty(prestamosRecibidos)}" style="margin-bottom: 3rem;">
+            <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem;">Items que me han prestado</h2>
+            <div class="grid-3">
+                <div th:each="p : ${prestamosRecibidos}" class="card" style="padding: 1.25rem; background: #eff6ff; border-color: #bfdbfe;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
+                        <h2 style="font-size: 1.125rem;" th:text="${p.articulo.nombre}">Artículo</h2>
+                    </div>
+                    <p style="font-size: 0.875rem; color: var(--muted-foreground); margin-bottom: 0.25rem;">
+                        Prestado por: <span th:text="${p.usuarioPropietario != null} ? ${p.usuarioPropietario.nombre} : 'N/A'">N/A</span>
+                    </p>
+                    <p style="font-size: 0.875rem; color: var(--muted-foreground);">
+                        Desde: <span th:if="${p.fechaInicio != null}" th:text="${#temporals.format(p.fechaInicio, 'dd/MM/yyyy')}"></span><span th:unless="${p.fechaInicio != null}">-</span>
+                        — <strong style="color: #2563eb;" th:text="|${p.diasPrestado} días|">0 días</strong>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

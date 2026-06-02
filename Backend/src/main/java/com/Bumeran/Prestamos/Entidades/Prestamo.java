@@ -63,8 +63,10 @@ public class Prestamo {
         return ChronoUnit.DAYS.between(fechaInicio, LocalDate.now());
     }
 
+    @Column(nullable = false)
+    private Boolean activo = true;
+
     @Enumerated(EnumType.STRING)
     private EstadoPrestamo estado = EstadoPrestamo.EN_CURSO;
 
-    
 }

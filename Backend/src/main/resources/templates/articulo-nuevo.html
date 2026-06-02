@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Item - Bumeran Préstamos</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}" />
+</head>
+<body>
+    <div class="container" style="max-width: 500px; margin-top: 2rem;">
+        <div class="nav" style="margin-bottom: 2rem;">
+            <a href="/dashboard" class="btn btn-secondary" style="padding: 0.25rem 0.75rem; font-size: 0.8rem;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.25rem;"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+                Back
+            </a>
+        </div>
+        <div class="card">
+            <h1 style="font-size: 1.25rem; margin-bottom: 0.25rem;">New Item</h1>
+            <p style="font-size: 0.875rem; color: var(--muted-foreground); margin-bottom: 1.5rem;">Complete the item information.</p>
+
+            <div th:if="${error}" style="padding: 0.75rem; background: #fee2e2; color: #991b1b; border-radius: var(--radius); margin-bottom: 1rem;" th:text="${error}"></div>
+
+            <form th:action="@{/articulos/nuevo}" method="post">
+                <div class="form-group">
+                    <label for="nombre">Name</label>
+                    <input type="text" id="nombre" name="nombre" placeholder="Ej: Portátil Dell" required />
+                </div>
+                <div class="form-group">
+                    <label for="descripcion">Description</label>
+                    <textarea id="descripcion" name="descripcion" placeholder="Describe the item" rows="3" style="width: 100%; padding: 0.5rem 0.75rem; font-size: 0.875rem; border: 1px solid var(--border); border-radius: var(--radius); background: #f3f3f5; outline: none; font-family: inherit;" required></textarea>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 0.75rem; padding-top: 1rem;">
+                    <a href="/dashboard" class="btn btn-secondary" style="text-decoration: none;">Cancelar</a>
+                    <button type="submit">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

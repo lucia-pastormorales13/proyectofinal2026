@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loans - Bumeran Préstamos</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}" />
+</head>
+<body>
+    <div class="container">
+        <div class="nav">
+            <img th:src="@{/images/Logo.png}" alt="Bumeran" height="32" style="margin-right: 0.5rem;" />
+            <h1 style="font-size: 1.25rem; margin-right: 2rem;">Bumeran</h1>
+            <a href="/dashboard">My Items</a>
+            <a href="/prestamos" class="active">Loans</a>
+            <span style="margin-left: auto; font-size: 0.875rem; color: var(--muted-foreground);">
+                Welcome to Bumeran!
+            </span>
+            <a href="/logout" class="btn btn-secondary" style="padding: 0.25rem 0.75rem; font-size: 0.8rem;">Logout</a>
+        </div>
+
+        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+        <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+
+        <div style="display: flex; justify-content: flex-end; margin-bottom: 1.5rem;">
+            <a href="/prestamos/nuevo" class="btn" style="gap: 0.5rem;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Crear préstamo
+            </a>
+        </div>
+
+        <!-- SECCIÓN 1: PRÉSTAMOS QUE HE HECHO -->
+        <div style="margin-bottom: 3rem;">
+            <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.25rem;">Items que presté</h2>
+            <p style="color: var(--muted-foreground); font-size: 0.875rem; margin-bottom: 1rem;">Artículos que has prestado a otros.</p>
+
+            <div th:if="${#lists.isEmpty(prestamos)}" class="card" style="text-align: center; padding: 2rem; color: var(--muted-foreground); font-size: 0.875rem;">
+                No has prestado ningún artículo todavía.
+            </div>
+
+            <div th:unless="${#lists.isEmpty(prestamos)}" class="card" style="padding: 0; overflow: hidden;">
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Prestado a</th>
+                                <th>Desde</th>
+                                <th>Tiempo</th>
+                                <th>Estado</th>
+                                <th style="text-align: right;">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="p : ${prestamos}">
+                                <td style="font-weight: 500;" th:text="${p.articulo.nombre}">Item</td>
+                                <td>
+                                    <th:block th:if="${p.usuarioReceptor != null}" th:text="${p.usuarioReceptor.nombre}"></th:block>
+                                    <th:block th:if="${p.usuarioReceptor == null and p.nombreReceptor != null}" th:text="${p.nombreReceptor}"></th:block>
+                                    <th:block th:if="${p.usuarioReceptor == null and p.nombreReceptor == null}">External Friend</th:block>
+                                </td>
+                                <td>
+                                    <th:block th:if="${p.fechaInicio != null}" th:text="${#temporals.format(p.fechaInicio, 'dd/MM/yyyy')}"></th:block>
+                                    <th:block th:unless="${p.fechaInicio != null}">-</th:block>
+                                </td>
+                                <td><strong th:text="|${p.diasPrestado} días|">0 días</strong></td>
+                                <td>
+                                    <span th:if="${p.fechaDevuelto == null}" class="badge badge-active">En Curso</span>
+                                    <span th:unless="${p.fechaDevuelto == null}" class="badge badge-done">Devuelto</span>
+                                </td>
+                                <td style="text-align: right;">
+                                    <form th:if="${p.fechaDevuelto == null}" th:action="@{/prestamos/{id}/devolver(id=${p.id})}" method="post" style="display: inline;">
+                                        <button type="submit" class="btn" style="background: #16a34a; padding: 0.25rem 0.75rem; font-size: 0.8rem; gap: 0.5rem;">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                                            Marcar Devolución
+                                        </button>
+                                    </form>
+                                    <span th:unless="${p.fechaDevuelto == null}" style="font-size: 0.75rem; color: var(--muted-foreground);">Finalizado</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN 2: PRÉSTAMOS RECIBIDOS -->
+        <div th:if="${not #lists.isEmpty(prestamosRecibidos)}" style="margin-bottom: 3rem;">
+            <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.25rem;">Items que me prestaron</h2>
+            <p style="color: var(--muted-foreground); font-size: 0.875rem; margin-bottom: 1rem;">Artículos que otros te han prestado.</p>
+
+            <div class="card" style="padding: 0; overflow: hidden;">
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Prestado por</th>
+                                <th>Desde</th>
+                                <th>Tiempo</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="p : ${prestamosRecibidos}">
+                                <td style="font-weight: 500;" th:text="${p.articulo.nombre}">Item</td>
+                                <td>
+                                    <th:block th:if="${p.usuarioPropietario != null}" th:text="${p.usuarioPropietario.nombre}"></th:block>
+                                    <th:block th:unless="${p.usuarioPropietario != null}">N/A</th:block>
+                                </td>
+                                <td>
+                                    <th:block th:if="${p.fechaInicio != null}" th:text="${#temporals.format(p.fechaInicio, 'dd/MM/yyyy')}"></th:block>
+                                    <th:block th:unless="${p.fechaInicio != null}">-</th:block>
+                                </td>
+                                <td><strong th:text="|${p.diasPrestado} días|">0 días</strong></td>
+                                <td>
+                                    <span th:if="${p.fechaDevuelto == null}" class="badge badge-active">En Curso</span>
+                                    <span th:unless="${p.fechaDevuelto == null}" class="badge badge-done">Devuelto</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
